@@ -98,7 +98,9 @@ create index if not exists memories_date on public.memories(memory_date desc);
 create table if not exists public.tea_topics (
   id uuid primary key default gen_random_uuid(),
   title text not null check (char_length(title) between 1 and 120),
+  zone text not null default 'academic' check (zone in ('academic', 'life')),
   description text,
+  tags text[] not null default '{}',
   owner_id uuid not null references public.members(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

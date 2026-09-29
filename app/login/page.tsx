@@ -35,8 +35,8 @@ export default function LoginPage() {
   return <main className="auth-screen">
     <section className="auth-card">
       <div className="brand-mark">511</div>
-      <p className="eyebrow">511 SOCIOLOGY DORM</p>
-      <h1>登录宿舍共享空间</h1>
+      <p className="eyebrow">SHIYUE STUDIO</p>
+      <h1>登录拾跃事务所</h1>
       <p className="muted">网站内容可直接浏览；登录后可以参与编辑和互动。输入管理员添加过的邮箱，我们会发送一次性登录链接。</p>
       <form onSubmit={sendLink} className="login-form">
         <label htmlFor="email">邮箱地址</label>

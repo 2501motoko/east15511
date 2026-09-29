@@ -401,6 +401,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 }
 
 .tea-layout { display:grid; grid-template-columns:minmax(250px,.72fr) minmax(0,1.6fr); gap:14px; align-items:start; }
+.tea-zones { display:flex; gap:8px; margin:-5px 0 16px; padding:5px; width:max-content; border-radius:10px; background:#edf0f5; }
+.tea-zones button { min-width:105px; padding:8px 12px; border:0; border-radius:7px; background:transparent; color:#6e7c90; font-size:12px; font-weight:650; }
+.tea-zones button.active { color:#4058c0; background:#fff; box-shadow:0 2px 7px #20325212; }
+.tea-zones button span { margin-left:5px; color:#9aa4b2; font-size:10px; }
+.tea-tag-list { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+.tea-tag-list span { border-radius:20px; padding:3px 8px; color:#5266bb; background:#eef0ff; font-size:10px; }
+.tea-topic-tags { color:#5568c6!important; }
 .tea-topics { position:sticky; top:18px; padding:15px; }
 .tea-topics .panel-head h3 { font-size:15px; }
 .tea-topic-list { display:grid; gap:6px; margin-top:12px; }

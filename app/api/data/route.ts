@@ -80,7 +80,8 @@ export async function GET() {
       members: member ? members.map((row) => ({ id: row.id, displayName: row.display_name, role: row.role })) : [],
       invites: member?.role === "admin" ? inviteQ.data ?? [] : [],
       teaTopics: (topicsQ.data ?? []).map((row) => ({
-        id: row.id, title: row.title, description: row.description, ownerId: row.owner_id,
+        id: row.id, title: row.title, zone: row.zone, description: row.description,
+        tags: row.tags ?? [], ownerId: row.owner_id,
         owner: memberNames.get(row.owner_id) ?? "宿舍成员", createdAt: row.created_at, updatedAt: row.updated_at,
       })),
       teaPosts: (teaPostsQ.data ?? []).map((row) => ({
@@ -153,7 +154,14 @@ export async function POST(request: Request) {
     if (action === "addTeaTopic") {
       const title = str("title", 120), description = str("description", 1000);
       if (!title) return bad("请填写主题名称。 ");
-      const result = await db.from("tea_topics").insert({ title, description: description || null, owner_id: member.id });
+      const zone = str("zone", 20);
+      if (zone !== "academic" && zone !== "life") return bad("请选择学术或生活分区。");
+      const tags = Array.isArray(body.tags)
+        ? [...new Set(body.tags.filter((tag): tag is string => typeof tag === "string").map((tag) => tag.trim().replace(/^#+/, "").slice(0, 24)).filter(Boolean))].slice(0, 8)
+        : [];
+      const result = await db.from("tea_topics").insert({
+        title, zone, tags, description: description || null, owner_id: member.id,
+      });
       return fail(result.error) ?? json({ ok: true }, 201);
     }
     if (action === "addTeaPost") {
