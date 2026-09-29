@@ -176,7 +176,7 @@ export default function Home() {
     <aside className="sidebar">
       <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); setTab("home"); }}><span className="brand-mark">511</span><span><b>吾一一事务所</b><small>SHARED SPACE</small></span></a>
       <div className="side-label">宿舍空间</div>
-      <nav className="side-nav" aria-label="主导航">{nav.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${tab === id ? "active" : ""}`} onClick={() => { setTab(id); setShowForm(""); }}><Icon size={18} strokeWidth={1.9}/><span>{label}</span>{id === "calendar" && items.length > 0 && <i>{items.filter((item) => item.date >= shanghaiDate()).length}</i>}</button>)}</nav>
+      <nav className="side-nav" aria-label="主导航">{nav.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${tab === id ? "active" : ""}`} onClick={() => { setTab(id); setShowForm(""); }}><Icon size={18} strokeWidth={1.9}/><span>{label}</span></button>)}</nav>
       <div className="sidebar-bottom"><div className="member-badge"><span className="avatar">{data?.member.displayName?.slice(0, 1) ?? "?"}</span><span><b>{data?.member.displayName ?? "正在连接…"}</b><small>{data?.member.role === "admin" ? "宿舍管理员" : data?.member.role === "guest" ? "访客 · 只读" : "宿舍成员"}</small></span>{data?.member.role === "admin" && <ShieldCheck size={16} className="admin-icon"/>}</div><p>{canInteract ? "宿舍成员可参与编辑" : "访客可浏览，登录后可互动"}</p></div>
     </aside>
 
