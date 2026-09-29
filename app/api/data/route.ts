@@ -5,13 +5,19 @@ import { accountUsername, getLoginAccounts } from "../../lib/login-accounts";
 const json = (data: unknown, status = 200) => Response.json(data, { status });
 const bad = (message: string, status = 400) => json({ error: message }, status);
 const now = () => new Date().toISOString();
+const defaultDutySchedule = [
+  { weekday: 0, username: "刘佳" },
+  { weekday: 1, username: "王为钧" },
+  { weekday: 3, username: "谢俞淇" },
+  { weekday: 5, username: "赵英" },
+];
+const missingTable = (error: { code?: string } | null) => Boolean(error && ["42P01", "PGRST205"].includes(error.code ?? ""));
 
 export async function GET() {
   const current = await getCurrentMember();
-  let member: Member | null;
-  if (isMember(current)) member = current;
-  else if (current.status === 401 || current.status === 403) member = null;
-  else return current;
+  // Session lookup is optional for public reads. If it fails, continue as a
+  // guest; all private queries below remain filtered to public rows only.
+  const member: Member | null = isMember(current) ? current : null;
   try {
     const db = createSupabaseAdminClient();
     const calendarQuery = db.from("calendar_items").select("*");
@@ -32,9 +38,10 @@ export async function GET() {
       db.from("tea_topics").select("*").order("updated_at", { ascending: false }),
       db.from("tea_posts").select("*").order("created_at"),
     ]);
-    const queries = [coursesQ, resourcesQ, calendarQ, dutiesQ, dutyScheduleQ, sportsQ, memoriesQ, membersQ, topicsQ, teaPostsQ];
+    const queries = [coursesQ, resourcesQ, calendarQ, dutiesQ, sportsQ, memoriesQ, membersQ, topicsQ, teaPostsQ];
     const failure = queries.find((q) => q.error)?.error;
     if (failure) throw failure;
+    if (dutyScheduleQ.error && !missingTable(dutyScheduleQ.error)) throw dutyScheduleQ.error;
     const courses = coursesQ.data ?? [];
     const members = membersQ.data ?? [];
     const courseNames = new Map(courses.map((row) => [row.id, row.name]));
@@ -62,7 +69,9 @@ export async function GET() {
         id: row.id, date: row.duty_date,
         garbageDone: row.garbage_done, sweepDone: row.sweep_done,
       })),
-      dutySchedule: (dutyScheduleQ.data ?? []).map((row) => ({ weekday: row.weekday, username: row.member_username })),
+      dutySchedule: dutyScheduleQ.error
+        ? defaultDutySchedule
+        : (dutyScheduleQ.data ?? []).map((row) => ({ weekday: row.weekday, username: row.member_username })),
       sports: (sportsQ.data ?? []).map((row) => ({
         id: row.id, activityType: row.activity_type, durationMinutes: row.duration_minutes,
         date: row.activity_date, isPublic: row.is_public, ownerId: row.owner_id,
@@ -227,12 +236,14 @@ export async function POST(request: Request) {
       const configured = Object.entries(getLoginAccounts() ?? {}).some(([studentId, account]) => accountUsername(studentId, account) === username);
       if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 || !username || !configured) return bad("请选择有效的星期和成员。");
       const result = await db.from("duty_weekly_schedule").upsert({ weekday, member_username: username, updated_at: now() }, { onConflict: "weekday" });
+      if (missingTable(result.error)) return bad("值日排班表尚未初始化，请在 Supabase 运行 supabase/duty_calendar.sql。", 503);
       return fail(result.error) ?? json({ ok: true });
     }
     if (action === "deleteDutySchedule") {
       const weekday = Number(body.weekday);
       if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return bad("请选择有效的星期。");
       const result = await db.from("duty_weekly_schedule").delete().eq("weekday", weekday);
+      if (missingTable(result.error)) return bad("值日排班表尚未初始化，请在 Supabase 运行 supabase/duty_calendar.sql。", 503);
       return fail(result.error) ?? json({ ok: true });
     }
     if (action === "toggleDuty") {

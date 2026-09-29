@@ -170,18 +170,18 @@ export default function Home() {
   const canInteract = Boolean(data && data.member.role !== "guest");
   const zoneTopics = data?.teaTopics.filter((topic) => topic.zone === teaZone) ?? [];
 
-  if (error && !data) return <main className="auth-screen"><section className="auth-card"><div className="brand-mark">511</div><p className="eyebrow">SHIYUE STUDIO</p><h1>拾跃事务所</h1><p className="muted">共享内容暂时无法读取，请稍后重试。</p><a className="primary-button sign-in" href="/login">成员登录</a><p className="auth-error">{error}</p></section></main>;
+  if (error && !data) return <main className="auth-screen"><section className="auth-card"><div className="brand-mark">511</div><p className="eyebrow">WUYIYI STUDIO</p><h1>吾一一事务所</h1><p className="muted">访客无需登录即可查看公共内容。当前公共数据接口暂时无法连接。</p><div className="public-error-actions"><button className="primary-button sign-in" onClick={() => void refresh()}>重新加载</button><a className="text-button" href="/login">成员登录（参与编辑）</a></div><p className="auth-error">{error}</p></section></main>;
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); setTab("home"); }}><span className="brand-mark">511</span><span><b>拾跃事务所</b><small>SHARED SPACE</small></span></a>
+      <a className="brand" href="#home" onClick={(e) => { e.preventDefault(); setTab("home"); }}><span className="brand-mark">511</span><span><b>吾一一事务所</b><small>SHARED SPACE</small></span></a>
       <div className="side-label">宿舍空间</div>
       <nav className="side-nav" aria-label="主导航">{nav.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${tab === id ? "active" : ""}`} onClick={() => { setTab(id); setShowForm(""); }}><Icon size={18} strokeWidth={1.9}/><span>{label}</span>{id === "calendar" && items.length > 0 && <i>{items.filter((item) => item.date >= shanghaiDate()).length}</i>}</button>)}</nav>
       <div className="sidebar-bottom"><div className="member-badge"><span className="avatar">{data?.member.displayName?.slice(0, 1) ?? "?"}</span><span><b>{data?.member.displayName ?? "正在连接…"}</b><small>{data?.member.role === "admin" ? "宿舍管理员" : data?.member.role === "guest" ? "访客 · 只读" : "宿舍成员"}</small></span>{data?.member.role === "admin" && <ShieldCheck size={16} className="admin-icon"/>}</div><p>{canInteract ? "宿舍成员可参与编辑" : "访客可浏览，登录后可互动"}</p></div>
     </aside>
 
     <main className="main-area">
-      <header className="topbar"><div><div className="crumb">拾跃事务所 <span>/</span> {title}</div><h1>{title}</h1></div><div className="top-actions"><div className="today-chip"><span className="today-dot"/>{humanDate(shanghaiDate())} <small>中国标准时间</small></div>{canInteract && <button className="top-add" onClick={() => { setTab("calendar"); setShowForm("ddl"); }}><Plus size={17}/> 新增事项</button>}{canInteract ? <a className="text-button" href="/auth/signout">退出</a> : <a className="text-button" href="/login">成员登录</a>}</div></header>
+      <header className="topbar"><div><div className="crumb">吾一一事务所 <span>/</span> {title}</div><h1>{title}</h1></div><div className="top-actions"><div className="today-chip"><span className="today-dot"/>{humanDate(shanghaiDate())} <small>中国标准时间</small></div>{canInteract && <button className="top-add" onClick={() => { setTab("calendar"); setShowForm("ddl"); }}><Plus size={17}/> 新增事项</button>}{canInteract ? <a className="text-button" href="/auth/signout">退出</a> : <a className="text-button" href="/login">成员登录</a>}</div></header>
       <div className="mobile-nav">{nav.map(({ id, label, icon: Icon }) => <button key={id} className={tab === id ? "active" : ""} onClick={() => { setTab(id); setShowForm(""); }}><Icon size={16}/>{label}</button>)}</div>
       {error && <div className="error-banner" role="alert">{error}<button onClick={() => setError("")}>关闭</button></div>}
       {!data ? <section className="loading-card"><span className="spinner"/><p>正在加载宿舍共享数据…</p></section> : <>
@@ -253,7 +253,7 @@ export default function Home() {
         </section>}
       </>}
       {editing && <EditDialog edit={editing} courses={data?.courses ?? []} busy={busy} onClose={() => setEditing(null)} onSubmit={saveEdit}/>}
-      <footer className="site-footer"><span>拾跃事务所</span><span>记录学习，也记录一起生活的日子。</span></footer>
+      <footer className="site-footer"><span>吾一一事务所</span><span>记录学习，也记录一起生活的日子。</span></footer>
       {notice && <div className="toast" role="status"><span><Check size={14}/></span>{notice}</div>}
     </main>
   </div>;

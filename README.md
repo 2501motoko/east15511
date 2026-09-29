@@ -1,4 +1,4 @@
-# 拾跃事务所
+# 吾一一事务所
 
 基于 Next.js、Supabase 和 Vercel 的协作网站。包括课程资料、DDL 与活动、值日打卡、运动记录、风采照片墙和茶楼。茶楼设“学术”和“生活”分区；登录成员创建主题时可自由填写标签。访客可以免登录浏览；宿舍成员用学号和密码登录后可新增内容、打卡和参与讨论。管理员负责管理课程标签。数据库和文件均保存在 Supabase。
 
@@ -63,3 +63,8 @@ pnpm dev
 ## 安全
 
 不要把 `.env.local`、`DORM_LOGIN_ACCOUNTS_JSON`、Supabase Secret key / service_role key 或其他密钥上传到 GitHub。互动操作和上传仍由服务端验证成员登录；Secret key 只在服务器使用，不要把它改成 `NEXT_PUBLIC_` 变量。
+
+## 故障排查
+
+- 首页出现“公共数据接口暂时无法连接”时，这表示 Supabase 数据读取失败，不代表访客必须登录。确认 Vercel 已设置 `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY` 和服务器变量 `SUPABASE_SERVICE_ROLE_KEY`，并且已运行 `supabase/schema.sql`。旧数据库还应运行 `supabase/tea_house.sql` 与 `supabase/duty_calendar.sql`。值日周排班表缺失不会再阻断访客读取其他公开内容。
+- 访客可浏览公开内容；登录只用于新增、打卡、讨论和其他互动。

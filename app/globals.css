@@ -199,9 +199,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .calendar-cell:nth-child(7n) { border-right:0; }
 .calendar-cell:disabled { background:#fafbfd; }
 .calendar-cell:not(:disabled):hover { background:#f8f9ff; }
-.calendar-cell>span { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; font-size:11px; }
-.calendar-cell.cell-today>span { background:#fff0ea; color:#cf563b; font-weight:750; }
-.calendar-cell.cell-selected>span { background:#435bd3; color:#fff; font-weight:750; }
+.calendar-cell>span:not(.duty-calendar-name) { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; font-size:11px; }
+.calendar-cell.cell-today>span:not(.duty-calendar-name) { background:#fff0ea; color:#cf563b; font-weight:750; }
+.calendar-cell.cell-selected>span:not(.duty-calendar-name) { background:#435bd3; color:#fff; font-weight:750; }
 .cell-event { width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border-radius:3px; padding:1px 4px; color:#bd5238; background:#fff0ec; font-size:9px; font-style:normal; }
 .cell-event.activity { color:#4d60c3; background:#edf0ff; }
 .calendar-cell>small { color:#8490a1; font-size:9px; padding-left:3px; }
@@ -275,6 +275,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .auth-card h1 { margin:0; font-size:24px; }
 .auth-card .muted { color:#7d8999; font-size:13px; margin:8px 0 18px; }
 .auth-card .sign-in { width:100%; }
+.public-error-actions { display:grid; justify-items:center; gap:12px; }
+.public-error-actions .text-button { min-height:28px; }
 .auth-error { color:#a64b37; font-size:11px; margin:12px 0 0; }
 .modal-overlay { position:fixed; inset:0; z-index:30; display:grid; place-items:center; padding:18px; background:#15243b85; backdrop-filter:blur(3px); }
 .edit-modal { width:min(100%,650px); max-height:min(90vh,780px); overflow-y:auto; padding:19px; border:1px solid #dfe5ee; border-radius:14px; background:#fff; box-shadow:0 24px 70px #0e1d3338; }
@@ -468,6 +470,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .duty-calendar-heading .month-toolbar { flex:1; margin-bottom:0; }
 .duty-calendar-heading>.secondary-button { min-height:34px; padding:0 10px; font-size:11px; }
 .duty-calendar-cell,.sport-calendar-cell { min-height:103px; align-items:stretch; padding:4px; }
+.duty-calendar-cell[role="button"],.sport-calendar-cell[role="gridcell"] { cursor:pointer; }
+.duty-calendar-cell[role="button"]:focus-visible,.sport-calendar-cell[role="gridcell"]:focus-visible { outline:3px solid #aebafa; outline-offset:-3px; z-index:1; }
 .calendar-cell-empty { pointer-events:none; }
 .duty-date-select,.sport-date-select { display:flex; align-items:center; justify-content:flex-start; width:100%; min-height:20px; border:0; background:transparent; padding:0; color:#41536b; text-align:left; }
 .duty-date-select>span,.sport-date-select>span { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; font-size:11px; }

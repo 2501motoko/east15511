@@ -33,8 +33,8 @@ export default function LoginPage() {
   return <main className="auth-screen">
     <section className="auth-card">
       <div className="brand-mark">511</div>
-      <p className="eyebrow">SHIYUE STUDIO</p>
-      <h1>登录拾跃事务所</h1>
+      <p className="eyebrow">WUYIYI STUDIO</p>
+      <h1>登录吾一一事务所</h1>
       <p className="muted">输入学号和密码，即可参与编辑和讨论。</p>
       <form onSubmit={signIn} className="login-form">
         <label htmlFor="username">学号</label>

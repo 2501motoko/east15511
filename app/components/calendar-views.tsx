@@ -76,14 +76,14 @@ export function DutyCalendarView({ month, selectedDate, schedules, duties, accou
           const schedule = date ? namesByWeekday.get(weekIndex(date)) : undefined;
           const duty = date ? duties.find((item) => item.date === date) : undefined;
           const done = Number(!!duty?.sweepDone) + Number(!!duty?.garbageDone);
-          return <div key={`${date ?? "empty"}-${index}`} className={`calendar-cell duty-calendar-cell ${!date ? "calendar-cell-empty" : ""} ${date === selectedDate ? "cell-selected" : ""} ${date === today ? "cell-today" : ""}`}>
-            {date && <button className="duty-date-select" onClick={() => onSelectDate(date)}><span>{Number(date.slice(-2))}</span></button>}
-            {date && schedule && <button className="duty-calendar-name" title={`${schedule} 值日`} onClick={() => onSelectDate(date)}>{schedule}</button>}
+          return <div key={`${date ?? "empty"}-${index}`} className={`calendar-cell duty-calendar-cell ${!date ? "calendar-cell-empty" : ""} ${date === selectedDate ? "cell-selected" : ""} ${date === today ? "cell-today" : ""}`} role={date ? "button" : undefined} tabIndex={date ? 0 : undefined} aria-label={date ? `${dateHeading(date)} 值日详情` : undefined} onClick={() => date && onSelectDate(date)} onKeyDown={(event) => { if (date && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); onSelectDate(date); } }}>
+            {date && <div className="duty-date-select"><span>{Number(date.slice(-2))}</span></div>}
+            {date && schedule && <span className="duty-calendar-name" title={`${schedule} 值日`}>{schedule}</span>}
             {date && <div className="duty-cell-status" aria-label={`${done}/2 项完成`}>{[duty?.sweepDone, duty?.garbageDone].map((checked, task) => <i key={task} className={checked ? "done" : ""}/>)}</div>}
           </div>;
         })}
       </div></div>
-      <div className="calendar-legend"><span><i className="legend-duty"/>当日负责人</span><span><i className="legend-duty-done"/>已打卡</span><span className="legend-note">点选日期查看并打卡</span></div>
+      <div className="calendar-legend"><span><i className="legend-duty"/>当日负责人</span><span><i className="legend-duty-done"/>已打卡</span><span className="legend-note">点击日期格查看并打卡</span></div>
       <div className="weekly-schedule-list"><b>每周排班</b>{schedules.length ? schedules.slice().sort((a, b) => a.weekday - b.weekday).map((item) => <div className="weekly-schedule-row" key={item.weekday}><span>{weekdayNames[item.weekday]}</span><strong>{item.username}</strong>{canInteract && <><button aria-label={`修改${weekdayNames[item.weekday]}排班`} onClick={() => startEditing(item)}><Pencil size={14}/></button><button aria-label={`删除${weekdayNames[item.weekday]}排班`} onClick={() => onDeleteSchedule(item.weekday)}><Trash2 size={14}/></button></>}</div>) : <small className="schedule-empty">还没有固定排班。添加后会按周重复。</small>}</div>
     </section>
     <section className="panel agenda-panel duty-agenda-panel">
@@ -134,14 +134,14 @@ export function SportCalendarView({ month, selectedDate, sports, accounts, canIn
             const daily = date ? sports.filter((sport) => sport.date === date) : [];
             const grouped = new Map<string, SportLog[]>();
             for (const sport of daily) grouped.set(sport.owner, [...(grouped.get(sport.owner) ?? []), sport]);
-            return <div key={`${date ?? "empty"}-${index}`} className={`calendar-cell sport-calendar-cell ${!date ? "calendar-cell-empty" : ""} ${date === selectedDate ? "cell-selected" : ""} ${date === today ? "cell-today" : ""}`}>
-              {date && <button className="sport-date-select" onClick={() => selectDate(date)}><span>{Number(date.slice(-2))}</span></button>}
+            return <div key={`${date ?? "empty"}-${index}`} className={`calendar-cell sport-calendar-cell ${!date ? "calendar-cell-empty" : ""} ${date === selectedDate ? "cell-selected" : ""} ${date === today ? "cell-today" : ""}`} role={date ? "gridcell" : undefined} tabIndex={date ? 0 : undefined} aria-label={date ? `${dateHeading(date)} 运动记录` : undefined} onClick={() => date && selectDate(date)} onKeyDown={(event) => { if (date && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); selectDate(date); } }}>
+              {date && <div className="sport-date-select"><span>{Number(date.slice(-2))}</span></div>}
               {date && <div className="sport-lanes">{lanes.map((name) => {
                 const logs = grouped.get(name);
                 if (!logs?.length) return <span className="sport-lane-empty" key={name}/>;
                 const color = sportColor(name);
                 const total = logs.reduce((sum, log) => sum + (log.durationMinutes ?? 0), 0);
-                return <button key={name} className="sport-calendar-chip" style={{ "--sport-ink": color.ink, "--sport-soft": color.soft } as React.CSSProperties} title={`${name} · ${logs.length} 次运动，${total ? `${total} 分钟` : "时长未填"}`} onClick={() => { onSelectDate(date); setFocusedOwner(name); }}><b>{name}</b><span>{total ? `${total}分` : "打卡"}</span></button>;
+                return <button key={name} className="sport-calendar-chip" style={{ "--sport-ink": color.ink, "--sport-soft": color.soft } as React.CSSProperties} title={`${name} · ${logs.length} 次运动，${total ? `${total} 分钟` : "时长未填"}`} onClick={(event) => { event.stopPropagation(); onSelectDate(date); setFocusedOwner(name); }}><b>{name}</b><span>{total ? `${total}分` : "打卡"}</span></button>;
               })}</div>}
             </div>;
           })}
@@ -161,7 +161,7 @@ export function SportCalendarView({ month, selectedDate, sports, accounts, canIn
             {canEdit && <div className="sport-detail-actions"><button aria-label="编辑运动记录" onClick={() => onEdit(sport)}><Pencil size={14}/></button><button aria-label="删除运动记录" onClick={() => onDelete(sport)}><Trash2 size={14}/></button></div>}
           </article>;
         })}{!focusedLogs.length && !formOpen && <div className="sport-day-empty"><Dumbbell size={25}/><b>{selectedLogs.length ? "没有这个成员的记录" : "从一次轻松运动开始"}</b><span>打卡后会按成员颜色显示在月历中。</span></div>}</div>
-        <div className="sport-calendar-note">月历色条显示用户名和当日运动时长；点击色条查看详细记录。</div>
+        <div className="sport-calendar-note">月历色条显示用户名和当日运动时长；点击日期格查看当天记录，点击色条筛选成员。</div>
       </section>
     </div>
   </>;
