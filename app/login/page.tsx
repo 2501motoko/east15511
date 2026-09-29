@@ -1,32 +1,30 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { createSupabaseBrowserClient } from "../lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function sendLink(event: FormEvent<HTMLFormElement>) {
+  async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
-    setMessage("");
     setError("");
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        email: email.trim().toLowerCase(),
-        options: {
-          emailRedirectTo: window.location.origin + "/auth/callback",
-          shouldCreateUser: true,
-        },
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
-      if (authError) throw authError;
-      setMessage("登录链接已发送到邮箱。请用收到邀请的邮箱打开邮件并完成登录。");
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error || "登录失败，请重试。");
+      router.push("/");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "暂时无法发送登录链接。");
+      setError(cause instanceof Error ? cause.message : "登录失败，请重试。");
     } finally {
       setBusy(false);
     }
@@ -37,18 +35,22 @@ export default function LoginPage() {
       <div className="brand-mark">511</div>
       <p className="eyebrow">SHIYUE STUDIO</p>
       <h1>登录拾跃事务所</h1>
-      <p className="muted">网站内容可直接浏览；登录后可以参与编辑和互动。输入管理员添加过的邮箱，我们会发送一次性登录链接。</p>
-      <form onSubmit={sendLink} className="login-form">
-        <label htmlFor="email">邮箱地址</label>
-        <input id="email" type="email" autoComplete="email" value={email}
-          onChange={(event) => setEmail(event.target.value)} required />
+      <p className="muted">输入管理员分配的学号和密码，即可参与编辑和讨论。</p>
+      <form onSubmit={signIn} className="login-form">
+        <label htmlFor="username">学号</label>
+        <input id="username" name="username" type="text" inputMode="numeric" autoComplete="username"
+          pattern="[0-9]{11}" maxLength={11} value={username}
+          onChange={(event) => setUsername(event.target.value)} required />
+        <label htmlFor="password">密码</label>
+        <input id="password" name="password" type="password" autoComplete="current-password"
+          maxLength={128} value={password}
+          onChange={(event) => setPassword(event.target.value)} required />
         <button className="primary-button sign-in" disabled={busy}>
-          {busy ? "发送中…" : "发送登录链接"}
+          {busy ? "登录中…" : "登录"}
         </button>
       </form>
-      {message && <p className="login-success" role="status">{message}</p>}
       {error && <p className="auth-error" role="alert">{error}</p>}
-      <p className="muted login-footnote">只有宿舍管理员添加过的邮箱可以编辑内容或参与讨论。</p>
+      <p className="muted login-footnote">忘记密码或无法登录，请联系管理员。</p>
     </section>
   </main>;
 }

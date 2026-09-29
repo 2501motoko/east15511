@@ -33,11 +33,6 @@ export async function GET() {
     const queries = [coursesQ, resourcesQ, calendarQ, dutiesQ, sportsQ, memoriesQ, membersQ, topicsQ, teaPostsQ];
     const failure = queries.find((q) => q.error)?.error;
     if (failure) throw failure;
-    const inviteQ = member?.role === "admin"
-      ? await db.from("member_invites").select("email,role,active").order("email")
-      : { data: [], error: null };
-    if (inviteQ.error) throw inviteQ.error;
-
     const courses = coursesQ.data ?? [];
     const members = membersQ.data ?? [];
     const courseNames = new Map(courses.map((row) => [row.id, row.name]));
@@ -78,7 +73,6 @@ export async function GET() {
         uploader: memberNames.get(row.uploader_id) ?? "宿舍成员", createdAt: row.created_at,
       })),
       members: member ? members.map((row) => ({ id: row.id, displayName: row.display_name, role: row.role })) : [],
-      invites: member?.role === "admin" ? inviteQ.data ?? [] : [],
       teaTopics: (topicsQ.data ?? []).map((row) => ({
         id: row.id, title: row.title, zone: row.zone, description: row.description,
         tags: row.tags ?? [], ownerId: row.owner_id,
@@ -132,23 +126,6 @@ export async function POST(request: Request) {
       if (resources.error || items.error) throw resources.error ?? items.error;
       if ((resources.count ?? 0) + (items.count ?? 0) > 0) return bad("这门课已有资料或 DDL，不能删除。", 409);
       const result = await db.from("courses").delete().eq("id", id);
-      return fail(result.error) ?? json({ ok: true });
-    }
-    if (action === "inviteMember") {
-      const denied = needAdmin(); if (denied) return denied;
-      const email = str("email", 254).toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad("请填写有效的邮箱地址。");
-      if (email === process.env.DORM_ADMIN_EMAIL?.trim().toLowerCase()) return bad("管理员邮箱已自动配置。");
-      const result = await db.from("member_invites").upsert(
-        { email, role: "member", active: true, created_by: member.id }, { onConflict: "email" },
-      );
-      return fail(result.error) ?? json({ ok: true });
-    }
-    if (action === "removeInvite") {
-      const denied = needAdmin(); if (denied) return denied;
-      const email = str("email", 254).toLowerCase();
-      if (email === process.env.DORM_ADMIN_EMAIL?.trim().toLowerCase()) return bad("不能移除主管理员。", 403);
-      const result = await db.from("member_invites").update({ active: false }).eq("email", email);
       return fail(result.error) ?? json({ ok: true });
     }
     if (action === "addTeaTopic") {

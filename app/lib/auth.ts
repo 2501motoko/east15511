@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "./supabase/admin";
 import { createSupabaseServerClient } from "./supabase/server";
+import { getLoginAccounts, studentNumberFromEmail } from "./login-accounts";
 
 export type Member = {
   id: string;
@@ -16,39 +17,22 @@ export async function getCurrentMember(): Promise<Member | Response> {
     if (error || !user?.email) return Response.json({ error: "请先登录。" }, { status: 401 });
 
     const email = user.email.trim().toLowerCase();
+    const username = studentNumberFromEmail(email);
+    const account = username ? getLoginAccounts()?.[username] : null;
+    if (!username || !account || !["admin", "member"].includes(account.role)) {
+      return Response.json({ error: "这个账号没有访问权限。" }, { status: 403 });
+    }
+
     const admin = createSupabaseAdminClient();
-    const adminEmail = process.env.DORM_ADMIN_EMAIL?.trim().toLowerCase();
-    if (adminEmail && email === adminEmail) {
-      const { error: seedError } = await admin.from("member_invites").upsert(
-        { email, role: "admin", active: true },
-        { onConflict: "email" },
-      );
-      if (seedError) throw seedError;
-    }
-
-    const { data: invite, error: inviteError } = await admin
-      .from("member_invites")
-      .select("email,role,active")
-      .eq("email", email)
-      .eq("active", true)
-      .maybeSingle();
-    if (inviteError) throw inviteError;
-    if (!invite) {
-      return Response.json(
-        { error: "这个邮箱还没有宿舍访问权限，请联系管理员添加后再登录。" },
-        { status: 403 },
-      );
-    }
-
     const metadata = user.user_metadata ?? {};
     const displayName =
       (typeof metadata.full_name === "string" && metadata.full_name.trim()) ||
       (typeof metadata.name === "string" && metadata.name.trim()) ||
-      email.split("@")[0];
+      username;
     const { data: member, error: memberError } = await admin
       .from("members")
       .upsert(
-        { id: user.id, email, display_name: displayName, role: invite.role },
+        { id: user.id, email, display_name: displayName, role: account.role },
         { onConflict: "id" },
       )
       .select("id,email,display_name,role")
