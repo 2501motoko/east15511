@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getLoginAccounts, studentEmail } from "../../../lib/login-accounts";
+import { accountUsername, getLoginAccounts, studentEmail } from "../../../lib/login-accounts";
 import { createSupabaseAdminClient } from "../../../lib/supabase/admin";
 import { createSupabaseServerClient } from "../../../lib/supabase/server";
 
@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   }
 
   const email = studentEmail(username);
+  const displayName = accountUsername(username, account);
   const admin = createSupabaseAdminClient();
   try {
     const { data: listed, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
       const { error } = await admin.auth.admin.updateUserById(existingUser.id, {
         password,
         email_confirm: true,
-        user_metadata: { full_name: username, student_id: username },
+        user_metadata: { full_name: displayName, username: displayName, student_id: username },
       });
       if (error) throw error;
     } else {
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name: username, student_id: username },
+        user_metadata: { full_name: displayName, username: displayName, student_id: username },
       });
       if (error) {
         // Another request may have created this account at the same time.
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
         const { error: updateError } = await admin.auth.admin.updateUserById(racedUser.id, {
           password,
           email_confirm: true,
-          user_metadata: { full_name: username, student_id: username },
+          user_metadata: { full_name: displayName, username: displayName, student_id: username },
         });
         if (updateError) throw updateError;
       } else if (!data.user) {

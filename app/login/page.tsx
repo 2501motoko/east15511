@@ -35,7 +35,7 @@ export default function LoginPage() {
       <div className="brand-mark">511</div>
       <p className="eyebrow">SHIYUE STUDIO</p>
       <h1>登录拾跃事务所</h1>
-      <p className="muted">输入管理员分配的学号和密码，即可参与编辑和讨论。</p>
+      <p className="muted">输入学号和密码，即可参与编辑和讨论。</p>
       <form onSubmit={signIn} className="login-form">
         <label htmlFor="username">学号</label>
         <input id="username" name="username" type="text" inputMode="numeric" autoComplete="username"
@@ -50,7 +50,7 @@ export default function LoginPage() {
         </button>
       </form>
       {error && <p className="auth-error" role="alert">{error}</p>}
-      <p className="muted login-footnote">忘记密码或无法登录，请联系管理员。</p>
+      <p className="muted login-footnote">初始密码为学号后六位。忘记密码或无法登录，请联系管理员。</p>
     </section>
   </main>;
 }

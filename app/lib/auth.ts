@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from "./supabase/admin";
 import { createSupabaseServerClient } from "./supabase/server";
-import { getLoginAccounts, studentNumberFromEmail } from "./login-accounts";
+import { accountUsername, getLoginAccounts, studentNumberFromEmail } from "./login-accounts";
 
 export type Member = {
   id: string;
@@ -24,11 +24,7 @@ export async function getCurrentMember(): Promise<Member | Response> {
     }
 
     const admin = createSupabaseAdminClient();
-    const metadata = user.user_metadata ?? {};
-    const displayName =
-      (typeof metadata.full_name === "string" && metadata.full_name.trim()) ||
-      (typeof metadata.name === "string" && metadata.name.trim()) ||
-      username;
+    const displayName = accountUsername(username, account);
     const { data: member, error: memberError } = await admin
       .from("members")
       .upsert(
@@ -43,6 +39,12 @@ export async function getCurrentMember(): Promise<Member | Response> {
     console.error("Member authentication failed", error);
     return Response.json({ error: "登录服务暂不可用，请检查 Supabase 配置。" }, { status: 503 });
   }
+}
+
+export function displayNameForEmail(email: string) {
+  const studentId = studentNumberFromEmail(email.trim().toLowerCase());
+  if (!studentId) return "宿舍成员";
+  return accountUsername(studentId, getLoginAccounts()?.[studentId]);
 }
 
 export function isMember(value: Member | Response): value is Member {

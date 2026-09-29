@@ -454,3 +454,106 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .tea-empty p { margin:0 0 5px; }
 @media (max-width:900px) { .tea-layout { grid-template-columns:minmax(215px,.75fr) minmax(0,1.5fr); } }
 @media (max-width:680px) { .tea-layout { grid-template-columns:1fr; } .tea-topics { position:static; padding:12px; } .tea-topic-list { display:flex; overflow:auto; padding-bottom:3px; } .tea-topic-item { width:190px; flex:none; } .tea-thread { padding:14px; } .tea-thread-heading h3 { font-size:17px; } .tea-post-content { margin-left:0; } .tea-reply-toggle { margin-left:0; } .tea-reply { margin-left:8px; } .tea-reply>p { margin-left:0; } .tea-reply-compose { margin-left:8px; } .tea-compose>div { align-items:flex-start; flex-direction:column; } }
+
+/* Login and shared calendar refinements */
+.login-form { display:grid; grid-template-columns:1fr; gap:7px; margin-top:19px; }
+.login-form label { display:block; margin-top:3px; color:#40516a; font-size:13px; font-weight:650; }
+.login-form input { width:100%; min-height:43px; border:1px solid #dbe2eb; border-radius:9px; padding:9px 11px; color:#243750; background:#fff; font-size:14px; }
+.login-form .sign-in { margin-top:9px; }
+.auth-card .login-footnote { margin-top:13px; }
+.visibility-row { grid-column:1/-1; display:flex; align-items:center; gap:13px; flex-wrap:wrap; }
+.visibility-row .visibility-control { margin:0; }
+.visibility-hint { color:#909baa; font-size:11px; }
+.duty-calendar-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.duty-calendar-heading .month-toolbar { flex:1; margin-bottom:0; }
+.duty-calendar-heading>.secondary-button { min-height:34px; padding:0 10px; font-size:11px; }
+.duty-calendar-cell,.sport-calendar-cell { min-height:103px; align-items:stretch; padding:4px; }
+.calendar-cell-empty { pointer-events:none; }
+.duty-date-select,.sport-date-select { display:flex; align-items:center; justify-content:flex-start; width:100%; min-height:20px; border:0; background:transparent; padding:0; color:#41536b; text-align:left; }
+.duty-date-select>span,.sport-date-select>span { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; font-size:11px; }
+.cell-today .duty-date-select>span,.cell-today .sport-date-select>span { background:#fff0ea; color:#cf563b; font-weight:750; }
+.cell-selected .duty-date-select>span,.cell-selected .sport-date-select>span { background:#435bd3; color:#fff; font-weight:750; }
+.duty-calendar-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border:0; border-radius:4px; padding:2px 4px; color:#5368c7; background:#eff2ff; text-align:left; font-size:9px; }
+.duty-cell-status { display:flex; gap:3px; margin-top:auto; padding:2px 1px 0; }
+.duty-cell-status i { width:5px; height:5px; border-radius:50%; background:#d4dbe5; }
+.duty-cell-status i.done { background:#3b967f; }
+.calendar-legend .legend-duty { background:#6679d9; }
+.calendar-legend .legend-duty-done { background:#3b967f; }
+.weekly-schedule-list { display:grid; gap:5px; margin-top:14px; padding-top:11px; border-top:1px solid #edf0f4; }
+.weekly-schedule-list>b { margin-bottom:2px; color:#58677c; font-size:11px; }
+.weekly-schedule-row { min-height:28px; display:flex; align-items:center; gap:8px; color:#7f8b9c; font-size:10px; }
+.weekly-schedule-row strong { flex:1; color:#42536a; font-size:11px; font-weight:650; }
+.weekly-schedule-row button,.sport-detail-actions button { width:25px; height:25px; display:grid; place-items:center; border:0; border-radius:6px; color:#8491a3; background:transparent; }
+.weekly-schedule-row button:hover,.sport-detail-actions button:hover { color:#435bd3; background:#f0f2ff; }
+.schedule-empty { color:#929dad; font-size:10px; }
+.duty-agenda-panel { min-height:290px; }
+.duty-assignee-card { display:flex; align-items:center; gap:10px; margin:16px 0 8px; padding:12px; border:1px solid #e6eaf1; border-radius:10px; background:#fafbfd; }
+.duty-assignee-avatar { width:36px; height:36px; display:grid; place-items:center; border-radius:11px; color:#5268cd; background:#e9edff; font-weight:750; }
+.duty-assignee-card>div { display:flex; flex-direction:column; flex:1; }
+.duty-assignee-card small { color:#8c98a8; font-size:10px; }
+.duty-assignee-card b { color:#354861; font-size:13px; }
+.duty-assignee-card>button { width:28px; height:28px; display:grid; place-items:center; border:0; border-radius:7px; color:#7d8aa0; background:transparent; }
+.duty-action-label,.sport-date-subtitle { margin:10px 0 6px; color:#8b97a7; font-size:10px; }
+.duty-checkin-row { width:100%; min-height:60px; display:flex; align-items:center; gap:10px; border:0; border-top:1px solid #edf0f4; background:#fff; padding:8px 3px; text-align:left; color:#42546b; }
+.duty-checkin-row:disabled { opacity:.65; }
+.duty-check-icon { width:26px; height:26px; display:grid; place-items:center; border:1px solid #dbe2e9; border-radius:50%; color:#fff; }
+.duty-checkin-row.is-done .duty-check-icon { border-color:#35917d; background:#35917d; }
+.duty-checkin-row>span:nth-child(2) { display:flex; flex-direction:column; flex:1; }
+.duty-checkin-row b { font-size:12px; }
+.duty-checkin-row small { color:#8a96a6; font-size:10px; }
+.duty-checkin-row>svg { color:#a2acba; }
+.duty-checkin-row.is-done b { color:#348272; }
+.duty-rule-prompt { display:flex; align-items:center; gap:5px; margin:10px 0; color:#8995a5; font-size:10px; }
+.duty-rule-form { display:grid; gap:9px; margin-top:11px; padding:12px; border:1px solid #e3e8f0; border-radius:10px; background:#fafbfd; }
+.duty-rule-form>div { display:flex; justify-content:space-between; align-items:center; color:#40526a; font-size:12px; }
+.duty-rule-form>div button { border:0; background:transparent; color:#7c899b; font-size:20px; }
+.duty-rule-form label { display:grid; gap:4px; color:#748196; font-size:10px; }
+.duty-rule-form select { min-height:35px; border:1px solid #dce2eb; border-radius:7px; padding:5px 8px; background:#fff; color:#344760; font-size:12px; }
+.duty-rule-form .primary-button { min-height:34px; font-size:11px; }
+.duty-note,.sport-calendar-note { margin-top:13px; padding-top:10px; border-top:1px solid #edf0f4; color:#929dad; font-size:10px; }
+.sport-calendar-cell { min-height:116px; }
+.sport-lanes { display:grid; grid-template-rows:repeat(4,minmax(13px,auto)); gap:2px; margin-top:2px; }
+.sport-lane-empty { min-height:13px; }
+.sport-calendar-chip { min-width:0; min-height:14px; display:flex; align-items:center; gap:3px; overflow:hidden; border:0; border-left:3px solid var(--sport-ink); border-radius:3px; padding:0 3px; background:var(--sport-soft); color:var(--sport-ink); text-align:left; line-height:1.2; }
+.sport-calendar-chip b { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:8px; font-weight:700; }
+.sport-calendar-chip span { flex:none; font-size:8px; white-space:nowrap; }
+.sport-color-legend { display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:11px; padding-top:10px; border-top:1px solid #edf0f4; }
+.sport-color-legend span { display:flex; align-items:center; gap:5px; color:#718095; font-size:9px; }
+.sport-color-legend i { width:7px; height:7px; border-radius:2px; }
+.sport-quick-add { min-height:33px; padding:0 9px; font-size:11px; }
+.sport-quick-form { display:grid; gap:8px; margin:10px 0; padding:11px; border:1px solid #e3e8f0; border-radius:10px; background:#fafbfd; }
+.sport-quick-form label { display:grid; gap:4px; color:#748196; font-size:10px; }
+.sport-quick-form input:not([type=checkbox]) { min-height:35px; border:1px solid #dce2eb; border-radius:7px; padding:6px 8px; color:#344760; background:#fff; font-size:12px; }
+.sport-quick-form .sport-public-toggle { display:flex; align-items:center; grid-template-columns:auto 1fr; }
+.sport-public-toggle input { accent-color:#5368d7; }
+.sport-quick-form>.primary-button { min-height:34px; font-size:11px; }
+.sport-filter-reset { margin:3px 0 8px; border:0; background:transparent; color:#5267c9; font-size:10px; }
+.sport-detail-list { display:grid; gap:7px; max-height:390px; overflow:auto; }
+.sport-detail-card { min-width:0; display:flex; align-items:center; gap:5px; padding:9px 7px; border:1px solid #e7eaf0; border-left:3px solid var(--sport-ink); border-radius:9px; background:var(--sport-soft); }
+.sport-detail-main { min-width:0; flex:1; display:flex; align-items:center; gap:9px; border:0; background:transparent; text-align:left; color:#42536a; }
+.sport-detail-dot { width:9px; height:9px; flex:none; border-radius:50%; background:var(--sport-ink); }
+.sport-detail-main>span:last-child { display:grid; min-width:0; }
+.sport-detail-main b { font-size:12px; }
+.sport-detail-main small { overflow:hidden; color:#7e8999; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.sport-detail-actions { display:flex; }
+.sport-day-empty { min-height:160px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:#8995a5; text-align:center; }
+.sport-day-empty svg { color:#697bd1; }
+.sport-day-empty b { color:#596a80; font-size:12px; }
+.sport-day-empty span { font-size:10px; }
+@media (max-width:680px) {
+  .duty-calendar-heading { align-items:flex-start; }
+  .duty-calendar-heading>.secondary-button { min-height:31px; padding:0 7px; font-size:10px; }
+  .duty-calendar-cell { min-height:76px; padding:2px; }
+  .duty-calendar-name { padding:2px; font-size:7px; }
+  .duty-cell-status { justify-content:center; }
+  .sport-calendar-cell { min-height:91px; padding:2px; }
+  .sport-lanes { grid-template-rows:repeat(4,14px); gap:1px; }
+  .sport-lane-empty { min-height:14px; }
+  .sport-calendar-chip { min-height:14px; justify-content:flex-start; gap:1px; padding:0 2px; border-left-width:3px; }
+  .sport-calendar-chip b { display:block; max-width:22px; font-size:6px; }
+  .sport-calendar-chip span { display:block; font-size:5px; }
+  .sport-color-legend { gap:5px 8px; }
+  .sport-color-legend span { font-size:8px; }
+  .visibility-row { gap:6px 10px; }
+  .visibility-hint { font-size:10px; }
+}

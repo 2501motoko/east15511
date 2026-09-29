@@ -1,4 +1,4 @@
-export type LoginAccount = { password: string; role: "admin" | "member" };
+export type LoginAccount = { password: string; role: "admin" | "member"; username?: string };
 
 export function getLoginAccounts(): Record<string, LoginAccount> | null {
   try {
@@ -11,6 +11,10 @@ export function getLoginAccounts(): Record<string, LoginAccount> | null {
 }
 
 export const studentEmail = (username: string) => `student-${username}@accounts.dorm511.invalid`;
+
+export function accountUsername(studentId: string, account?: LoginAccount | null) {
+  return account?.username?.trim() || studentId;
+}
 
 export function studentNumberFromEmail(email: string) {
   return /^student-(\d{11})@accounts\.dorm511\.invalid$/.exec(email)?.[1] ?? null;

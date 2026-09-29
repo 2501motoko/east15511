@@ -5,20 +5,21 @@ import {
   BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight,
   ClipboardCheck, Clock3, Download, Dumbbell, FileDown, FileText, Images,
   LayoutDashboard, LockKeyhole, MapPin, MessageCircle, MessagesSquare, Pencil, Plus, Search, Send, ShieldCheck, Trash2,
-  Upload, Users, X,
+  Upload, X,
 } from "lucide-react";
+import { DutyCalendarView, SportCalendarView, type AccountOption, type DutyCheck, type DutySchedule, type SportLog } from "./components/calendar-views";
 
 type Member = { id: string; displayName: string; role: "admin" | "member" | "guest" };
 type Course = { id: string; name: string };
 type CalendarItem = { id: string; kind: "ddl" | "activity"; title: string; courseId: string | null; course: string | null; date: string; dueTime: string | null; startTime: string | null; endTime: string | null; location: string | null; notes: string | null; isPublic: number; ownerId: string; owner: string };
 type Resource = { id: string; courseId: string; course: string; title: string; fileName: string; contentType: string; size: number; uploaderId: string; uploader: string; createdAt: string };
-type Duty = { id: string; date: string; garbageMemberId: string | null; sweepMemberId: string | null; garbageDone: number; sweepDone: number; garbageDoneBy: string | null; sweepDoneBy: string | null; garbageName: string | null; sweepName: string | null };
-type Sport = { id: string; activityType: string | null; durationMinutes: number | null; date: string; isPublic: number; ownerId: string; owner: string };
+type Duty = DutyCheck;
+type Sport = SportLog;
 type Memory = { id: string; caption: string | null; date: string | null; fileName: string; contentType: string; size: number; uploaderId: string; uploader: string; createdAt: string };
 type TeaTopic = { id: string; title: string; zone: "academic" | "life"; description: string | null; tags: string[]; ownerId: string; owner: string; createdAt: string; updatedAt: string };
 type TeaPost = { id: string; topicId: string; parentId: string | null; content: string; ownerId: string; owner: string; createdAt: string };
-type Data = { member: Member; courses: Course[]; resources: Resource[]; calendar: CalendarItem[]; duties: Duty[]; sports: Sport[]; memories: Memory[]; members: Member[]; teaTopics: TeaTopic[]; teaPosts: TeaPost[] };
-type EditState = { type: "calendar"; item: CalendarItem } | { type: "resource"; item: Resource } | { type: "duty"; item: Duty } | { type: "sport"; item: Sport } | { type: "memory"; item: Memory };
+type Data = { member: Member; courses: Course[]; resources: Resource[]; calendar: CalendarItem[]; duties: Duty[]; dutySchedule: DutySchedule[]; accounts: AccountOption[]; sports: Sport[]; memories: Memory[]; members: Member[]; teaTopics: TeaTopic[]; teaPosts: TeaPost[] };
+type EditState = { type: "calendar"; item: CalendarItem } | { type: "resource"; item: Resource } | { type: "sport"; item: Sport } | { type: "memory"; item: Memory };
 
 const nav = [
   { id: "home", label: "总览", icon: LayoutDashboard },
@@ -151,6 +152,8 @@ export default function Home() {
   const selectedItems = filteredCalendar.filter((item) => item.date === selectedDate);
   const upcoming = [...items].filter((item) => item.date >= shanghaiDate()).sort((a, b) => `${a.date}${a.dueTime ?? a.startTime ?? ""}`.localeCompare(`${b.date}${b.dueTime ?? b.startTime ?? ""}`)).slice(0, 5);
   const dutyToday = data?.duties.find((d) => d.date === shanghaiDate());
+  const weekdayToday = new Date(`${shanghaiDate()}T00:00:00Z`).getUTCDay();
+  const dutyTodaySchedule = data?.dutySchedule.find((d) => d.weekday === weekdayToday);
   const doneCount = (data?.duties ?? []).reduce((sum, d) => sum + Number(!!d.garbageDone) + Number(!!d.sweepDone), 0);
   const totalChecks = (data?.duties ?? []).length * 2;
 
@@ -160,7 +163,7 @@ export default function Home() {
   };
   const saveEdit = (fields: Record<string, unknown>) => {
     if (!editing) return;
-    const action: Record<EditState["type"], string> = { calendar: "editCalendar", resource: "editResource", duty: "editDuty", sport: "editSport", memory: "editMemory" };
+    const action: Record<EditState["type"], string> = { calendar: "editCalendar", resource: "editResource", sport: "editSport", memory: "editMemory" };
     void mutate({ action: action[editing.type], id: editing.item.id, ...fields }, "修改已保存");
   };
   const title = nav.find((item) => item.id === tab)?.label ?? "总览";
@@ -186,7 +189,7 @@ export default function Home() {
           <div className="welcome-row"><div><p className="eyebrow">宿舍共享空间 · {new Date().getFullYear()}</p><h2>把共同生活，<em>记在一起。</em></h2><p>课程资料、待办日历和值日安排都在这里。</p></div><div className="week-stamp"><CalendarDays size={18}/><span>{humanDate(shanghaiDate())}</span><small>今天</small></div></div>
           <div className="metric-grid"><button onClick={() => setTab("calendar")} className="metric-card"><span className="metric-icon coral"><CalendarDays size={18}/></span><span className="metric-label">接下来的 DDL / 活动</span><b>{items.filter((item) => item.date >= shanghaiDate()).length}<small> 项</small></b><span className="metric-foot">查看共享日历 <ChevronRight size={14}/></span></button><button onClick={() => setTab("resources")} className="metric-card"><span className="metric-icon blue"><BookOpen size={18}/></span><span className="metric-label">课程资料</span><b>{data.resources.length}<small> 份</small></b><span className="metric-foot">按课程浏览 <ChevronRight size={14}/></span></button><button onClick={() => setTab("duties")} className="metric-card"><span className="metric-icon green"><ClipboardCheck size={18}/></span><span className="metric-label">值日完成情况</span><b>{doneCount}<small> / {totalChecks} 项</small></b><span className="metric-foot">倒垃圾与扫地分别打卡 <ChevronRight size={14}/></span></button></div>
           <div className="home-grid"><section className="panel upcoming-panel"><div className="panel-head"><div><p className="eyebrow">UP NEXT</p><h3>最近的日程</h3></div><button className="text-button" onClick={() => setTab("calendar")}>打开日历 <ChevronRight size={15}/></button></div>{upcoming.length ? <div className="upcoming-list">{upcoming.map((item) => <CalendarRow key={item.id} item={item} memberId={data.member.id} admin={data.member.role === "admin"} onEdit={() => setEditing({ type: "calendar", item })} onDelete={() => remove("deleteCalendar", item.id, "删除这条日程？")} onCalendar={() => addToDeviceCalendar(item)}/>)}</div> : canInteract ? <Empty title="暂时没有待办" text="新增课程 DDL 或活动，宿舍日历就会显示在这里。" action="新增 DDL" onClick={() => setShowForm("ddl")} /> : <Empty title="暂时没有待办" text="宿舍成员新增的公开 DDL 与活动会显示在这里。" />}</section>
-            <section className="panel today-panel"><div className="panel-head"><div><p className="eyebrow">TODAY&apos;S DUTY</p><h3>今日值日</h3></div><button className="soft-tag" onClick={() => setTab("duties")}>查看排班 <ChevronRight size={13}/></button></div>{dutyToday ? <div className="today-duty"><DutyTask label="倒垃圾" name={dutyToday.garbageName} done={!!dutyToday.garbageDone} me={dutyToday.garbageMemberId === data.member.id} admin={data.member.role === "admin"} onToggle={(done) => mutate({ action: "toggleDuty", id: dutyToday.id, field: "garbage", done }, done ? "已完成倒垃圾打卡" : "已撤销打卡")}/><DutyTask label="扫地" name={dutyToday.sweepName} done={!!dutyToday.sweepDone} me={dutyToday.sweepMemberId === data.member.id} admin={data.member.role === "admin"} onToggle={(done) => mutate({ action: "toggleDuty", id: dutyToday.id, field: "sweep", done }, done ? "已完成扫地打卡" : "已撤销打卡")}/><div className={`all-done ${dutyToday.garbageDone && dutyToday.sweepDone ? "complete" : ""}`}><span>{dutyToday.garbageDone && dutyToday.sweepDone ? "✓" : "·"}</span>{dutyToday.garbageDone && dutyToday.sweepDone ? "今日值日全部完成" : "两项都完成后，今日值日打卡成功"}</div></div> : <Empty title="今天没有排班" text="管理员可在值日表中安排倒垃圾和扫地。" action="查看值日表" onClick={() => setTab("duties")} />}</section></div>
+            <section className="panel today-panel"><div className="panel-head"><div><p className="eyebrow">TODAY&apos;S DUTY</p><h3>今日值日</h3></div><button className="soft-tag" onClick={() => { setTab("duties"); setSelectedDate(shanghaiDate()); }}>查看排班 <ChevronRight size={13}/></button></div><div className="today-duty"><div className="today-duty-assignee"><span>当日负责人</span><b>{dutyTodaySchedule?.username ?? "未安排"}</b></div><div className={`all-done ${dutyToday?.garbageDone && dutyToday?.sweepDone ? "complete" : ""}`}><span>{dutyToday?.garbageDone && dutyToday?.sweepDone ? "✓" : "·"}</span>{dutyToday?.garbageDone && dutyToday?.sweepDone ? "今日值日全部完成" : `${Number(!!dutyToday?.garbageDone) + Number(!!dutyToday?.sweepDone)} / 2 项已完成`}</div></div></section></div>
         </section>}
 
         {tab === "resources" && <section className="page-content">
@@ -213,16 +216,21 @@ export default function Home() {
         </section>}
 
         {tab === "duties" && <section className="page-content">
-          <div className="section-intro"><div><p className="eyebrow">DAILY ROTATION</p><h2>线上值日表</h2><p>倒垃圾和扫地分别打卡，两项都完成后，当天值日才算完成。</p></div>{data.member.role === "admin" && <button className="primary-button" onClick={() => setShowForm(showForm === "duty" ? "" : "duty")}><Plus size={16}/>安排值日</button>}</div>
-          {showForm === "duty" && <DutyForm members={data.members} busy={busy} onClose={() => setShowForm("")} onSubmit={(form) => mutate({ action: "addDuty", ...form }, "值日安排已添加")}/>}
-          <div className="duty-summary"><div className="metric-icon green"><Check size={18}/></div><div><b>{doneCount} / {totalChecks}</b><span>已完成分项</span></div><div className="progress-track"><span style={{ width: `${totalChecks ? Math.round(doneCount / totalChecks * 100) : 0}%` }}/></div><small>{totalChecks ? Math.round(doneCount / totalChecks * 100) : 0}%</small></div>
-          <div className="duty-list">{data.duties.map((d) => <article className={`duty-card ${d.garbageDone && d.sweepDone ? "duty-complete" : ""}`} key={d.id}><div className="duty-date"><span>{humanDate(d.date)}</span><small>{new Date(`${d.date}T00:00:00Z`).toLocaleDateString("zh-CN", { weekday: "short", timeZone: "UTC" })}</small></div><DutyTask label="倒垃圾" name={d.garbageName} done={!!d.garbageDone} me={d.garbageMemberId === data.member.id} admin={data.member.role === "admin"} onToggle={(done) => mutate({ action: "toggleDuty", id: d.id, field: "garbage", done }, done ? "倒垃圾已打卡" : "已撤销打卡")}/><DutyTask label="扫地" name={d.sweepName} done={!!d.sweepDone} me={d.sweepMemberId === data.member.id} admin={data.member.role === "admin"} onToggle={(done) => mutate({ action: "toggleDuty", id: d.id, field: "sweep", done }, done ? "扫地已打卡" : "已撤销打卡")}/>{data.member.role === "admin" && <IconButton label="编辑排班" onClick={() => setEditing({ type: "duty", item: d })}><Pencil size={15}/></IconButton>}{data.member.role === "admin" && <IconButton label="删除排班" danger onClick={() => remove("deleteDuty", d.id, "删除这天的值日安排？")}><Trash2 size={16}/></IconButton>}</article>)}{!data.duties.length && <Empty title="还没有值日安排" text={data.member.role === "admin" ? "添加日期并分别安排倒垃圾、扫地的成员。" : "等待管理员添加值日安排。"} action={data.member.role === "admin" ? "安排第一天值日" : undefined} onClick={() => setShowForm("duty")} />}</div>
+          <div className="section-intro"><div><p className="eyebrow">DAILY ROTATION</p><h2>线上值日表</h2><p>按周查看负责人，点选某天可直接完成扫地或倒垃圾打卡。</p></div></div>
+          <DutyCalendarView month={month} selectedDate={selectedDate} schedules={data.dutySchedule} duties={data.duties} accounts={data.accounts} canInteract={canInteract}
+            onMonthChange={setMonth} onSelectDate={setSelectedDate}
+            onToggle={(date, field, done) => mutate({ action: "toggleDuty", date, field, done }, done ? "值日已打卡" : "已撤销打卡")}
+            onSaveSchedule={(weekday, username) => mutate({ action: "setDutySchedule", weekday, username }, "每周值日安排已更新")}
+            onDeleteSchedule={(weekday) => { if (window.confirm("删除这个星期的固定值日安排？")) void mutate({ action: "deleteDutySchedule", weekday }, "每周值日安排已删除"); }}/>
         </section>}
 
         {tab === "sports" && <section className="page-content">
-          <div className="section-intro"><div><p className="eyebrow">MOVE AT YOUR PACE</p><h2>运动打卡</h2><p>想记详细一些可以填运动类型和时长；只打卡也可以。没有排行榜。</p></div>{canInteract ? <button className="primary-button" onClick={() => setShowForm(showForm === "sport" ? "" : "sport")}><Plus size={16}/>运动打卡</button> : <span className="readonly-label">登录后可打卡</span>}</div>
-          {showForm === "sport" && <section className="form-panel"><div className="form-title"><div><p className="eyebrow">CHECK IN</p><h3>记录一次运动</h3></div><IconButton label="关闭" onClick={() => setShowForm("")}><X size={18}/></IconButton></div><form className="form-grid" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void mutate({ action: "addSport", date: f.get("date"), activityType: f.get("activityType"), durationMinutes: f.get("durationMinutes"), isPublic: f.get("isPublic") === "on" }, "运动打卡已记录"); }}><label>日期<input name="date" type="date" defaultValue={shanghaiDate()} required/></label><label>运动类型 <span className="optional-label">选填</span><input name="activityType" placeholder="如：跑步、游泳、羽毛球" maxLength={80}/></label><label>时长（分钟） <span className="optional-label">选填</span><input name="durationMinutes" type="number" min="1" max="1440" placeholder="例如 30"/></label><label className="visibility-control"><input type="checkbox" name="isPublic" defaultChecked/>对全宿舍可见</label><div className="form-actions"><button className="primary-button" disabled={busy}><Check size={15}/>{busy ? "保存中…" : "完成打卡"}</button><span>取消勾选后，这条记录只有你能看到</span></div></form></section>}
-          <div className="sports-list">{data.sports.map((sport) => <article key={sport.id} className="sport-card"><div className="sport-icon"><Dumbbell size={19}/></div><div className="sport-main"><h3>{sport.activityType || "完成一次运动"}</h3><p>{humanDate(sport.date)}{sport.durationMinutes ? ` · ${sport.durationMinutes} 分钟` : " · 只打卡"}</p></div><span className={`privacy-tag ${sport.isPublic ? "public" : "private"}`}>{sport.isPublic ? <Users size={13}/> : <LockKeyhole size={13}/>} {sport.isPublic ? "全宿舍可见" : "仅自己可见"}</span><span className="sport-owner">{sport.ownerId === data.member.id ? "我" : sport.owner}</span>{(sport.ownerId === data.member.id || data.member.role === "admin") && <IconButton label="编辑打卡" onClick={() => setEditing({ type: "sport", item: sport })}><Pencil size={15}/></IconButton>}{(sport.ownerId === data.member.id || data.member.role === "admin") && <IconButton label="删除打卡" danger onClick={() => remove("deleteSport", sport.id, "删除这条运动打卡？")}><Trash2 size={16}/></IconButton>}</article>)}{!data.sports.length && <Empty title="还没有运动打卡" text="不需要填很多内容，完成一次运动后点一下就能记下。" action="开始打卡" onClick={() => setShowForm("sport")} />}</div>
+          <div className="section-intro"><div><p className="eyebrow">MOVE AT YOUR PACE</p><h2>运动打卡</h2><p>月历以固定成员颜色显示用户名和时长；选中日期后可查看运动详情。</p></div></div>
+          <SportCalendarView month={month} selectedDate={selectedDate} sports={data.sports} accounts={data.accounts} canInteract={canInteract} memberId={data.member.id} role={data.member.role}
+            onMonthChange={setMonth} onSelectDate={setSelectedDate}
+            onCreate={(fields) => void mutate({ action: "addSport", ...fields }, "运动打卡已记录")}
+            onEdit={(sport) => setEditing({ type: "sport", item: sport })}
+            onDelete={(sport) => remove("deleteSport", sport.id, "删除这条运动打卡？")}/>
         </section>}
 
         {tab === "memories" && <section className="page-content">
@@ -244,7 +252,7 @@ export default function Home() {
           </div>}
         </section>}
       </>}
-      {editing && <EditDialog edit={editing} courses={data?.courses ?? []} members={data?.members ?? []} busy={busy} onClose={() => setEditing(null)} onSubmit={saveEdit}/>}
+      {editing && <EditDialog edit={editing} courses={data?.courses ?? []} busy={busy} onClose={() => setEditing(null)} onSubmit={saveEdit}/>}
       <footer className="site-footer"><span>拾跃事务所</span><span>记录学习，也记录一起生活的日子。</span></footer>
       {notice && <div className="toast" role="status"><span><Check size={14}/></span>{notice}</div>}
     </main>
@@ -258,43 +266,32 @@ function CalendarForm({ kind, courses, busy, onClose, onSubmit }: { kind: "ddl" 
     <label>日期<input name="date" type="date" defaultValue={shanghaiDate()} required/></label>
     {kind === "ddl" ? <label>截止时间 <span className="optional-label">选填</span><input name="dueTime" type="time"/></label> : <><label>开始时间 <span className="optional-label">选填</span><input name="startTime" type="time"/></label><label>结束时间 <span className="optional-label">选填</span><input name="endTime" type="time"/></label><label>地点 <span className="optional-label">选填</span><input name="location" maxLength={160} placeholder="活动地点"/></label></>}
     <label className="full-field">备注 <span className="optional-label">选填</span><textarea name="notes" maxLength={1000} rows={2} placeholder="补充说明"/></label>
-    {kind === "ddl" && <label className="visibility-control"><input type="checkbox" name="isPublic" defaultChecked/>全宿舍可见</label>}
-    <div className="form-actions"><button className="primary-button" disabled={busy}><Plus size={15}/>{busy ? "保存中…" : "加入共享日历"}</button>{kind === "ddl" && <span>取消勾选后仅自己可见</span>}</div>
+    {kind === "ddl" && <div className="visibility-row"><label className="visibility-control"><input type="checkbox" name="isPublic" defaultChecked/>全宿舍可见</label><span className="visibility-hint">取消勾选后仅自己可见</span></div>}
+    <div className="form-actions"><button className="primary-button" disabled={busy}><Plus size={15}/>{busy ? "保存中…" : "加入日历"}</button></div>
   </form></section>;
 }
 
-function DutyForm({ members, busy, onClose, onSubmit }: { members: Member[]; busy: boolean; onClose: () => void; onSubmit: (data: Record<string, unknown>) => void }) {
-  return <section className="form-panel"><div className="form-title"><div><p className="eyebrow">DUTY ROTATION</p><h3>安排一天值日</h3></div><IconButton label="关闭" onClick={onClose}><X size={18}/></IconButton></div><form className="form-grid" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); onSubmit({ date: f.get("date"), garbageMemberId: f.get("garbage"), sweepMemberId: f.get("sweep") }); }}><label>值日日期<input name="date" type="date" defaultValue={shanghaiDate()} required/></label><label>倒垃圾<select name="garbage" required defaultValue=""><option value="" disabled>选择成员</option>{members.map((m) => <option key={m.id} value={m.id}>{m.displayName}</option>)}</select></label><label>扫地<select name="sweep" required defaultValue=""><option value="" disabled>选择成员</option>{members.map((m) => <option key={m.id} value={m.id}>{m.displayName}</option>)}</select></label><div className="form-actions"><button className="primary-button" disabled={busy}><Plus size={15}/>{busy ? "保存中…" : "保存排班"}</button><span>成员完成自己负责的项目后打卡</span></div></form></section>;
-}
-
-function EditDialog({ edit, courses, members, busy, onClose, onSubmit }: { edit: EditState; courses: Course[]; members: Member[]; busy: boolean; onClose: () => void; onSubmit: (data: Record<string, unknown>) => void }) {
-  const title = { calendar: "编辑日历记录", resource: "编辑课程资料", duty: "修改值日安排", sport: "编辑运动打卡", memory: "编辑照片说明" }[edit.type];
+function EditDialog({ edit, courses, busy, onClose, onSubmit }: { edit: EditState; courses: Course[]; busy: boolean; onClose: () => void; onSubmit: (data: Record<string, unknown>) => void }) {
+  const title = { calendar: "编辑日历记录", resource: "编辑课程资料", sport: "编辑运动打卡", memory: "编辑照片说明" }[edit.type];
   const send = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); const form = new FormData(event.currentTarget);
     const value = (key: string) => form.get(key);
     if (edit.type === "calendar") onSubmit({ title: value("title"), date: value("date"), courseId: value("courseId"), dueTime: value("dueTime"), startTime: value("startTime"), endTime: value("endTime"), location: value("location"), notes: value("notes"), isPublic: value("isPublic") === "on" });
     if (edit.type === "resource") onSubmit({ courseId: value("courseId"), title: value("title") });
-    if (edit.type === "duty") onSubmit({ date: value("date"), garbageMemberId: value("garbage"), sweepMemberId: value("sweep") });
     if (edit.type === "sport") onSubmit({ date: value("date"), activityType: value("activityType"), durationMinutes: value("durationMinutes"), isPublic: value("isPublic") === "on" });
     if (edit.type === "memory") onSubmit({ date: value("date"), caption: value("caption") });
   };
   return <div className="modal-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-heading"><div className="form-title"><div><p className="eyebrow">EDIT RECORD</p><h3 id="edit-heading">{title}</h3></div><IconButton label="关闭" onClick={onClose}><X size={18}/></IconButton></div><form className="form-grid" onSubmit={send}>
     {edit.type === "calendar" && <><label>事项名称<input name="title" defaultValue={edit.item.title} required maxLength={160}/></label>{edit.item.kind === "ddl" && <label>课程标签<select name="courseId" defaultValue={edit.item.courseId ?? ""} required>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}<label>日期<input name="date" type="date" defaultValue={edit.item.date} required/></label>{edit.item.kind === "ddl" ? <label>截止时间 <span className="optional-label">选填</span><input name="dueTime" type="time" defaultValue={edit.item.dueTime ?? ""}/></label> : <><label>开始时间<input name="startTime" type="time" defaultValue={edit.item.startTime ?? ""}/></label><label>结束时间<input name="endTime" type="time" defaultValue={edit.item.endTime ?? ""}/></label><label>地点<input name="location" defaultValue={edit.item.location ?? ""} maxLength={160}/></label></>}<label className="full-field">备注<textarea name="notes" defaultValue={edit.item.notes ?? ""} rows={2} maxLength={1000}/></label>{edit.item.kind === "ddl" && <label className="visibility-control"><input type="checkbox" name="isPublic" defaultChecked={!!edit.item.isPublic}/>全宿舍可见</label>}</>}
     {edit.type === "resource" && <><label>课程标签<select name="courseId" defaultValue={edit.item.courseId} required>{courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label>资料名称<input name="title" defaultValue={edit.item.title} required maxLength={160}/></label><p className="full-field edit-note">文件本身不变；这里只修改资料名称和课程归档。</p></>}
-    {edit.type === "duty" && <><label>值日日期<input name="date" type="date" defaultValue={edit.item.date} required/></label><label>倒垃圾<select name="garbage" defaultValue={edit.item.garbageMemberId ?? ""} required>{members.map((m) => <option key={m.id} value={m.id}>{m.displayName}</option>)}</select></label><label>扫地<select name="sweep" defaultValue={edit.item.sweepMemberId ?? ""} required>{members.map((m) => <option key={m.id} value={m.id}>{m.displayName}</option>)}</select></label><p className="full-field edit-note">更换负责成员时，该项打卡会重置。</p></>}
     {edit.type === "sport" && <><label>日期<input name="date" type="date" defaultValue={edit.item.date} required/></label><label>运动类型 <span className="optional-label">选填</span><input name="activityType" defaultValue={edit.item.activityType ?? ""} maxLength={80}/></label><label>时长（分钟） <span className="optional-label">选填</span><input name="durationMinutes" type="number" min="1" max="1440" defaultValue={edit.item.durationMinutes ?? ""}/></label><label className="visibility-control"><input type="checkbox" name="isPublic" defaultChecked={!!edit.item.isPublic}/>对全宿舍可见</label></>}
     {edit.type === "memory" && <><label>日期 <span className="optional-label">选填</span><input name="date" type="date" defaultValue={edit.item.date ?? ""}/></label><label>照片说明 <span className="optional-label">选填</span><input name="caption" defaultValue={edit.item.caption ?? ""} maxLength={500}/></label></>}
     <div className="form-actions"><button className="primary-button" disabled={busy}><Check size={15}/>{busy ? "保存中…" : "保存修改"}</button><button className="secondary-button" type="button" onClick={onClose}>取消</button></div>
   </form></section></div>;
 }
 
-function DutyTask({ label, name, done, me, admin, onToggle }: { label: string; name: string | null; done: boolean; me: boolean; admin: boolean; onToggle: (done: boolean) => void }) {
-  const canToggle = admin || me;
-  return <div className={`duty-task ${done ? "task-done" : ""}`}><span className="task-check">{done ? <Check size={14}/> : <span/>}</span><span className="task-info"><b>{label}</b><small>{name || "待安排"}{done ? " · 已完成" : me ? " · 轮到你了" : ""}</small></span>{canToggle && <button className={`checkin-button ${done ? "checked" : ""}`} onClick={() => onToggle(!done)}>{done ? <><Check size={14}/>已打卡</> : "打卡"}</button>}</div>;
-}
-
 function CalendarRow({ item, memberId, admin, onEdit, onDelete, onCalendar }: { item: CalendarItem; memberId: string; admin: boolean; onEdit?: () => void; onDelete: () => void; onCalendar: () => void }) {
-  return <article className={`calendar-row ${item.kind === "activity" ? "event-row" : ""}`}><div className="date-tile"><b>{item.date.slice(8)}</b><small>{item.date.slice(5, 7)}月</small></div><div className="calendar-row-main"><div className="calendar-row-top"><span className={`kind-tag ${item.kind}`}>{item.kind === "ddl" ? "DDL" : "活动"}</span>{item.course && <span className="course-pill">{item.course}</span>}{item.kind === "ddl" && !item.isPublic && <span className="privacy-tag private"><LockKeyhole size={12}/>仅自己</span>}</div><h4>{item.title}</h4><div className="row-details">{item.kind === "ddl" ? item.dueTime ? <span><Clock3 size={13}/>{item.dueTime} 截止</span> : <span><CalendarDays size={13}/>仅日期</span> : <span><Clock3 size={13}/>{item.startTime ?? "时间待定"}{item.endTime ? `–${item.endTime}` : ""}</span>}{item.location && <span><MapPin size={13}/>{item.location}</span>}{item.notes && <span className="row-note">{item.notes}</span>}</div><small className="row-owner">{item.ownerId === memberId ? "由我创建" : item.owner}</small></div><div className="calendar-row-actions"><button className="mini-action" title="添加到设备日历" onClick={onCalendar}><CalendarDays size={14}/><span>加到日历</span></button>{(item.ownerId === memberId || admin) && onEdit && <IconButton label="编辑日程" onClick={onEdit}><Pencil size={14}/></IconButton>}{(item.ownerId === memberId || admin) && <IconButton label="删除日程" danger onClick={onDelete}><Trash2 size={15}/></IconButton>}</div></article>;
+  return <article className={`calendar-row ${item.kind === "activity" ? "event-row" : ""}`}><div className="date-tile"><b>{item.date.slice(8)}</b><small>{item.date.slice(5, 7)}月</small></div><div className="calendar-row-main"><div className="calendar-row-top"><span className={`kind-tag ${item.kind}`}>{item.kind === "ddl" ? "DDL" : "活动"}</span>{item.course && <span className="course-pill">{item.course}</span>}{item.kind === "ddl" && !item.isPublic && <span className="privacy-tag private"><LockKeyhole size={12}/>仅自己</span>}</div><h4>{item.title}</h4><div className="row-details">{item.kind === "ddl" ? item.dueTime ? <span><Clock3 size={13}/>{item.dueTime} 截止</span> : <span><CalendarDays size={13}/>仅日期</span> : <span><Clock3 size={13}/>{item.startTime ?? "时间待定"}{item.endTime ? `–${item.endTime}` : ""}</span>}{item.location && <span><MapPin size={13}/>{item.location}</span>}{item.notes && <span className="row-note">{item.notes}</span>}</div><small className="row-owner">{item.owner}</small></div><div className="calendar-row-actions"><button className="mini-action" title="添加到设备日历" onClick={onCalendar}><CalendarDays size={14}/><span>加到日历</span></button>{(item.ownerId === memberId || admin) && onEdit && <IconButton label="编辑日程" onClick={onEdit}><Pencil size={14}/></IconButton>}{(item.ownerId === memberId || admin) && <IconButton label="删除日程" danger onClick={onDelete}><Trash2 size={15}/></IconButton>}</div></article>;
 }
 
 function CalendarGrid({ month, selected, items, onSelect }: { month: string; selected: string; items: CalendarItem[]; onSelect: (date: string) => void }) {

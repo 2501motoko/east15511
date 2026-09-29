@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "../../lib/supabase/admin";
-import { getCurrentMember, isMember, type Member } from "../../lib/auth";
+import { displayNameForEmail, getCurrentMember, isMember, type Member } from "../../lib/auth";
+import { accountUsername, getLoginAccounts } from "../../lib/login-accounts";
 
 const json = (data: unknown, status = 200) => Response.json(data, { status });
 const bad = (message: string, status = 400) => json({ error: message }, status);
@@ -19,24 +20,26 @@ export async function GET() {
     const sportsQuery = db.from("sport_logs").select("*");
     if (member) sportsQuery.or("is_public.eq.true,owner_id.eq." + member.id);
     else sportsQuery.eq("is_public", true);
-    const [coursesQ, resourcesQ, calendarQ, dutiesQ, sportsQ, memoriesQ, membersQ, topicsQ, teaPostsQ] = await Promise.all([
+    const [coursesQ, resourcesQ, calendarQ, dutiesQ, dutyScheduleQ, sportsQ, memoriesQ, membersQ, topicsQ, teaPostsQ] = await Promise.all([
       db.from("courses").select("id,name").order("name"),
       db.from("resources").select("*").order("created_at", { ascending: false }),
       calendarQuery.order("item_date").order("due_time").order("start_time"),
       db.from("duty_rota").select("*").order("duty_date"),
+      db.from("duty_weekly_schedule").select("weekday,member_username").order("weekday"),
       sportsQuery.order("activity_date", { ascending: false }),
       db.from("memories").select("*").order("created_at", { ascending: false }),
-      db.from("members").select("id,display_name,role").order("display_name"),
+      db.from("members").select("id,email,display_name,role").order("display_name"),
       db.from("tea_topics").select("*").order("updated_at", { ascending: false }),
       db.from("tea_posts").select("*").order("created_at"),
     ]);
-    const queries = [coursesQ, resourcesQ, calendarQ, dutiesQ, sportsQ, memoriesQ, membersQ, topicsQ, teaPostsQ];
+    const queries = [coursesQ, resourcesQ, calendarQ, dutiesQ, dutyScheduleQ, sportsQ, memoriesQ, membersQ, topicsQ, teaPostsQ];
     const failure = queries.find((q) => q.error)?.error;
     if (failure) throw failure;
     const courses = coursesQ.data ?? [];
     const members = membersQ.data ?? [];
     const courseNames = new Map(courses.map((row) => [row.id, row.name]));
-    const memberNames = new Map(members.map((row) => [row.id, row.display_name]));
+    const memberNames = new Map(members.map((row) => [row.id, displayNameForEmail(row.email)]));
+    const loginAccounts = getLoginAccounts() ?? {};
     return json({
       member: member ? { id: member.id, displayName: member.display_name, role: member.role } : { id: "", displayName: "访客", role: "guest" },
       courses,
@@ -56,12 +59,10 @@ export async function GET() {
         ownerId: row.owner_id, owner: memberNames.get(row.owner_id) ?? "宿舍成员",
       })),
       duties: (dutiesQ.data ?? []).map((row) => ({
-        id: row.id, date: row.duty_date, garbageMemberId: row.garbage_member_id,
-        sweepMemberId: row.sweep_member_id, garbageDone: row.garbage_done, sweepDone: row.sweep_done,
-        garbageDoneBy: row.garbage_done_by, sweepDoneBy: row.sweep_done_by,
-        garbageName: row.garbage_member_id ? memberNames.get(row.garbage_member_id) ?? null : null,
-        sweepName: row.sweep_member_id ? memberNames.get(row.sweep_member_id) ?? null : null,
+        id: row.id, date: row.duty_date,
+        garbageDone: row.garbage_done, sweepDone: row.sweep_done,
       })),
+      dutySchedule: (dutyScheduleQ.data ?? []).map((row) => ({ weekday: row.weekday, username: row.member_username })),
       sports: (sportsQ.data ?? []).map((row) => ({
         id: row.id, activityType: row.activity_type, durationMinutes: row.duration_minutes,
         date: row.activity_date, isPublic: row.is_public, ownerId: row.owner_id,
@@ -72,7 +73,8 @@ export async function GET() {
         contentType: row.content_type, size: row.size, uploaderId: row.uploader_id,
         uploader: memberNames.get(row.uploader_id) ?? "宿舍成员", createdAt: row.created_at,
       })),
-      members: member ? members.map((row) => ({ id: row.id, displayName: row.display_name, role: row.role })) : [],
+      members: member ? members.map((row) => ({ id: row.id, displayName: displayNameForEmail(row.email), role: row.role })) : [],
+      accounts: member ? Object.entries(loginAccounts).map(([studentId, account]) => ({ studentId, username: accountUsername(studentId, account), role: account.role })) : [],
       teaTopics: (topicsQ.data ?? []).map((row) => ({
         id: row.id, title: row.title, zone: row.zone, description: row.description,
         tags: row.tags ?? [], ownerId: row.owner_id,
@@ -219,49 +221,34 @@ export async function POST(request: Request) {
       }).eq("id", id);
       return fail(result.error) ?? json({ ok: true });
     }
-    if (action === "addDuty") {
-      const denied = needAdmin(); if (denied) return denied;
-      const date = str("date", 10), garbage = str("garbageMemberId", 80), sweep = str("sweepMemberId", 80);
-      if (!isDate(date) || !garbage || !sweep) return bad("请选择日期以及倒垃圾、扫地的值日成员。");
-      const result = await db.from("duty_rota").insert({
-        duty_date: date, garbage_member_id: garbage, sweep_member_id: sweep, updated_at: now(),
-      });
-      return fail(result.error, "这一天已有值日安排。") ?? json({ ok: true }, 201);
-    }
-    if (action === "toggleDuty") {
-      const field = str("field", 20), id = str("id", 80), done = Boolean(body.done);
-      if (field !== "garbage" && field !== "sweep") return bad("打卡项目不正确。");
-      const { data: row, error } = await db.from("duty_rota").select("*").eq("id", id).maybeSingle();
-      if (error) throw error;
-      if (!row) return bad("没有找到这条值日安排。", 404);
-      const assigned = field === "garbage" ? row.garbage_member_id : row.sweep_member_id;
-      if (member.role !== "admin" && assigned !== member.id) return bad("只有对应值日成员可以打卡。", 403);
-      const result = field === "garbage"
-        ? await db.from("duty_rota").update({ garbage_done: done, garbage_done_by: done ? member.id : null, updated_at: now() }).eq("id", id)
-        : await db.from("duty_rota").update({ sweep_done: done, sweep_done_by: done ? member.id : null, updated_at: now() }).eq("id", id);
+    if (action === "setDutySchedule") {
+      const weekday = Number(body.weekday);
+      const username = str("username", 80);
+      const configured = Object.entries(getLoginAccounts() ?? {}).some(([studentId, account]) => accountUsername(studentId, account) === username);
+      if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 || !username || !configured) return bad("请选择有效的星期和成员。");
+      const result = await db.from("duty_weekly_schedule").upsert({ weekday, member_username: username, updated_at: now() }, { onConflict: "weekday" });
       return fail(result.error) ?? json({ ok: true });
     }
-    if (action === "deleteDuty" || action === "editDuty") {
-      const denied = needAdmin(); if (denied) return denied;
-      const id = str("id", 80);
-      if (action === "deleteDuty") {
-        const result = await db.from("duty_rota").delete().eq("id", id);
-        return fail(result.error) ?? json({ ok: true });
-      }
-      const date = str("date", 10), garbage = str("garbageMemberId", 80), sweep = str("sweepMemberId", 80);
-      if (!isDate(date) || !garbage || !sweep) return bad("请选择日期以及两项值日成员。");
-      const { data: current, error } = await db.from("duty_rota").select("*").eq("id", id).maybeSingle();
+    if (action === "deleteDutySchedule") {
+      const weekday = Number(body.weekday);
+      if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return bad("请选择有效的星期。");
+      const result = await db.from("duty_weekly_schedule").delete().eq("weekday", weekday);
+      return fail(result.error) ?? json({ ok: true });
+    }
+    if (action === "toggleDuty") {
+      const field = str("field", 20), date = str("date", 10), done = Boolean(body.done);
+      if (field !== "garbage" && field !== "sweep") return bad("打卡项目不正确。");
+      if (!isDate(date)) return bad("请选择有效日期。");
+      const { data: row, error } = await db.from("duty_rota").select("id").eq("duty_date", date).maybeSingle();
       if (error) throw error;
-      if (!current) return bad("没有找到这条值日安排。", 404);
-      const result = await db.from("duty_rota").update({
-        duty_date: date, garbage_member_id: garbage, sweep_member_id: sweep,
-        garbage_done: current.garbage_member_id === garbage ? current.garbage_done : false,
-        garbage_done_by: current.garbage_member_id === garbage ? current.garbage_done_by : null,
-        sweep_done: current.sweep_member_id === sweep ? current.sweep_done : false,
-        sweep_done_by: current.sweep_member_id === sweep ? current.sweep_done_by : null,
-        updated_at: now(),
-      }).eq("id", id);
-      return fail(result.error, "这一天已有值日安排。") ?? json({ ok: true });
+      if (!row) {
+        const created = await db.from("duty_rota").insert({ duty_date: date });
+        if (created.error && created.error.code !== "23505") return fail(created.error) ?? bad("保存失败。");
+      }
+      const result = field === "garbage"
+        ? await db.from("duty_rota").update({ garbage_done: done, garbage_done_by: done ? member.id : null, updated_at: now() }).eq("duty_date", date)
+        : await db.from("duty_rota").update({ sweep_done: done, sweep_done_by: done ? member.id : null, updated_at: now() }).eq("duty_date", date);
+      return fail(result.error) ?? json({ ok: true });
     }
     if (action === "addSport") {
       const date = str("date", 10), type = str("activityType", 80) || null, raw = body.durationMinutes;

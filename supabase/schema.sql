@@ -71,6 +71,16 @@ create table if not exists public.duty_rota (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.duty_weekly_schedule (
+  weekday smallint primary key check (weekday between 0 and 6),
+  member_username text not null,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.duty_weekly_schedule (weekday, member_username) values
+  (0, '刘佳'), (1, '王为钧'), (3, '谢俞淇'), (5, '赵英')
+on conflict (weekday) do nothing;
+
 create table if not exists public.sport_logs (
   id uuid primary key default gen_random_uuid(),
   activity_type text,
@@ -124,6 +134,7 @@ alter table public.courses enable row level security;
 alter table public.resources enable row level security;
 alter table public.calendar_items enable row level security;
 alter table public.duty_rota enable row level security;
+alter table public.duty_weekly_schedule enable row level security;
 alter table public.sport_logs enable row level security;
 alter table public.memories enable row level security;
 alter table public.tea_topics enable row level security;
