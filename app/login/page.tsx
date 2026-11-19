@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { RoommatePortrait } from "../components/roommate-portrait";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,6 +37,9 @@ export default function LoginPage() {
       <p className="eyebrow">WUYIYI STUDIO</p>
       <h1>登录吾一一事务所</h1>
       <p className="muted">输入学号和密码，即可参与编辑和讨论。</p>
+      <div className="auth-portrait">
+        <RoommatePortrait variant="auth" />
+      </div>
       <form onSubmit={signIn} className="login-form">
         <label htmlFor="username">学号</label>
         <input id="username" name="username" type="text" inputMode="numeric" autoComplete="username"

@@ -47,15 +47,32 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .secondary-button:hover { background:#f7f9fc; border-color:#bcc8d8; }
 .mobile-nav { display:none; }
 .page-content { max-width:1280px; margin:0 auto; padding:27px 0 0; }
-.welcome-row { display:flex; justify-content:space-between; align-items:center; gap:24px; margin:6px 0 23px; }
+.welcome-row {
+  display:grid;
+  grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);
+  align-items:center;
+  gap:clamp(14px,2.5vw,38px);
+  margin:6px 0 23px;
+  padding:clamp(17px,2.8vw,42px);
+  border:1px solid #e9e3e2;
+  border-radius:18px;
+  background:linear-gradient(115deg,#fff6f1 4%,#fffaf5 55%,#edf8f4);
+}
 .eyebrow { margin:0 0 7px; color:#8190a4; font-size:10px; font-weight:800; letter-spacing:.13em; }
-.welcome-row h2,.section-intro h2 { margin:0; color:#1a2c45; font-size:28px; line-height:1.2; letter-spacing:-.04em; }
-.welcome-row h2 em { color:#e96547; font-style:normal; }
-.welcome-row p:not(.eyebrow),.section-intro p:not(.eyebrow) { color:#748196; font-size:14px; margin:8px 0 0; }
-.week-stamp { display:grid; grid-template-columns:34px auto; align-items:center; column-gap:7px; color:#334765; border:1px solid var(--line); background:#fff; border-radius:12px; padding:10px 13px; min-width:125px; }
-.week-stamp svg { grid-row:span 2; color:#536cdd; }
-.week-stamp span { font-weight:700; font-size:13px; }
-.week-stamp small { color:#8a95a5; font-size:10px; }
+.welcome-row h2,.section-intro h2 { margin:0; color:#1a2c45; line-height:1.2; letter-spacing:-.04em; }
+.section-intro h2 { font-size:28px; }
+.welcome-row h2 { font-size:clamp(1.55rem,2.9vw,2.85rem); }
+.welcome-row h2 em { display:inline-block; color:#aa482f; font-style:normal; }
+.welcome-row .eyebrow { color:#6b6170; }
+.welcome-description { margin:10px 0 0; color:#4e6074; font-size:1rem; }
+.welcome-date { display:none; }
+.roommate-portrait { display:block; width:100%; height:auto; }
+.welcome-row .roommate-portrait {
+  max-width:550px;
+  justify-self:center;
+  filter:drop-shadow(0 5px 3px #48342918);
+}
+.section-intro p:not(.eyebrow) { color:#748196; font-size:14px; margin:8px 0 0; }
 .metric-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
 .metric-card { min-height:143px; border:1px solid var(--line); border-radius:13px; background:#fff; padding:15px 17px 12px; display:grid; grid-template-columns:38px 1fr; grid-template-rows:auto 1fr auto; column-gap:10px; text-align:left; color:var(--ink); transition:box-shadow .15s,transform .15s; }
 .metric-card:hover { box-shadow:0 8px 22px #263a5510; transform:translateY(-2px); }
@@ -274,6 +291,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .auth-card .eyebrow { margin-bottom:8px; }
 .auth-card h1 { margin:0; font-size:24px; }
 .auth-card .muted { color:#7d8999; font-size:13px; margin:8px 0 18px; }
+.auth-portrait {
+  margin:0 0 16px;
+  padding:10px 12px 8px;
+  border-radius:12px;
+  background:linear-gradient(110deg,#fff2eb,#fff9f3 52%,#ebf7f2);
+}
 .auth-card .sign-in { width:100%; }
 .public-error-actions { display:grid; justify-items:center; gap:12px; }
 .public-error-actions .text-button { min-height:28px; }
@@ -320,12 +343,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .mobile-nav button { flex:none; min-height:33px; display:flex; align-items:center; gap:5px; padding:0 9px; border:1px solid transparent; border-radius:8px; color:#758196; background:transparent; font-size:11px; }
   .mobile-nav button.active { background:#e9edff; color:#435bd3; border-color:#dce2fc; font-weight:700; }
   .page-content { padding-top:19px; }
-  .welcome-row { align-items:flex-start; margin:1px 0 17px; }
-  .welcome-row h2,.section-intro h2 { font-size:23px; }
-  .welcome-row p:not(.eyebrow),.section-intro p:not(.eyebrow) { font-size:12px; }
-  .week-stamp { min-width:0; padding:8px; grid-template-columns:26px auto; }
-  .week-stamp svg { width:16px; }
-  .week-stamp small { display:none; }
+  .welcome-row { grid-template-columns:1fr; gap:16px; margin:1px 0 17px; }
+  .welcome-row .roommate-portrait { max-width:426px; }
+  .welcome-date { display:flex; align-items:center; gap:6px; margin-top:8px; color:#4e6074; font-size:.875rem; }
+  .section-intro h2 { font-size:23px; }
+  .section-intro p:not(.eyebrow) { font-size:12px; }
   .metric-grid { gap:7px; }
   .metric-card { padding:10px 9px; min-height:125px; grid-template-columns:1fr; grid-template-rows:29px auto auto; }
   .metric-icon { grid-row:auto; width:27px; height:27px; border-radius:8px; }

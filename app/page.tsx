@@ -8,6 +8,7 @@ import {
   Upload, X,
 } from "lucide-react";
 import { DutyCalendarView, SportCalendarView, type AccountOption, type DutyCheck, type DutySchedule, type SportLog } from "./components/calendar-views";
+import { RoommatePortrait } from "./components/roommate-portrait";
 
 type Member = { id: string; displayName: string; role: "admin" | "member" | "guest" };
 type Course = { id: string; name: string };
@@ -170,7 +171,24 @@ export default function Home() {
   const canInteract = Boolean(data && data.member.role !== "guest");
   const zoneTopics = data?.teaTopics.filter((topic) => topic.zone === teaZone) ?? [];
 
-  if (error && !data) return <main className="auth-screen"><section className="auth-card"><div className="brand-mark">511</div><p className="eyebrow">WUYIYI STUDIO</p><h1>吾一一事务所</h1><p className="muted">访客无需登录即可查看公共内容。当前公共数据接口暂时无法连接。</p><div className="public-error-actions"><button className="primary-button sign-in" onClick={() => void refresh()}>重新加载</button><a className="text-button" href="/login">成员登录（参与编辑）</a></div><p className="auth-error">{error}</p></section></main>;
+  if (error && !data) return (
+    <main className="auth-screen">
+      <section className="auth-card">
+        <div className="brand-mark">511</div>
+        <p className="eyebrow">WUYIYI STUDIO</p>
+        <h1>吾一一事务所</h1>
+        <p className="muted">访客无需登录即可查看公共内容。当前公共数据接口暂时无法连接。</p>
+        <div className="auth-portrait">
+          <RoommatePortrait variant="auth" />
+        </div>
+        <div className="public-error-actions">
+          <button className="primary-button sign-in" onClick={() => void refresh()}>重新加载</button>
+          <a className="text-button" href="/login">成员登录（参与编辑）</a>
+        </div>
+        <p className="auth-error">{error}</p>
+      </section>
+    </main>
+  );
 
   return <div className="app-shell">
     <aside className="sidebar">
@@ -186,7 +204,18 @@ export default function Home() {
       {error && <div className="error-banner" role="alert">{error}<button onClick={() => setError("")}>关闭</button></div>}
       {!data ? <section className="loading-card"><span className="spinner"/><p>正在加载宿舍共享数据…</p></section> : <>
         {tab === "home" && <section className="page-content">
-          <div className="welcome-row"><div><p className="eyebrow">宿舍共享空间 · {new Date().getFullYear()}</p><h2>把共同生活，<em>记在一起。</em></h2><p>课程资料、待办日历和值日安排都在这里。</p></div><div className="week-stamp"><CalendarDays size={18}/><span>{humanDate(shanghaiDate())}</span><small>今天</small></div></div>
+          <div className="welcome-row">
+            <div>
+              <p className="eyebrow">宿舍共享空间 · {new Date().getFullYear()}</p>
+              <h2>把共同生活，<em>记在一起。</em></h2>
+              <p className="welcome-description">课程资料、待办日历和值日安排都在这里。</p>
+              <time className="welcome-date" dateTime={shanghaiDate()}>
+                <CalendarDays size={15} aria-hidden="true" />
+                {humanDate(shanghaiDate())}
+              </time>
+            </div>
+            <RoommatePortrait variant="welcome" />
+          </div>
           <div className="metric-grid"><button onClick={() => setTab("calendar")} className="metric-card"><span className="metric-icon coral"><CalendarDays size={18}/></span><span className="metric-label">接下来的 DDL / 活动</span><b>{items.filter((item) => item.date >= shanghaiDate()).length}<small> 项</small></b><span className="metric-foot">查看共享日历 <ChevronRight size={14}/></span></button><button onClick={() => setTab("resources")} className="metric-card"><span className="metric-icon blue"><BookOpen size={18}/></span><span className="metric-label">课程资料</span><b>{data.resources.length}<small> 份</small></b><span className="metric-foot">按课程浏览 <ChevronRight size={14}/></span></button><button onClick={() => setTab("duties")} className="metric-card"><span className="metric-icon green"><ClipboardCheck size={18}/></span><span className="metric-label">值日完成情况</span><b>{doneCount}<small> / {totalChecks} 项</small></b><span className="metric-foot">倒垃圾与扫地分别打卡 <ChevronRight size={14}/></span></button></div>
           <div className="home-grid"><section className="panel upcoming-panel"><div className="panel-head"><div><p className="eyebrow">UP NEXT</p><h3>最近的日程</h3></div><button className="text-button" onClick={() => setTab("calendar")}>打开日历 <ChevronRight size={15}/></button></div>{upcoming.length ? <div className="upcoming-list">{upcoming.map((item) => <CalendarRow key={item.id} item={item} memberId={data.member.id} admin={data.member.role === "admin"} onEdit={() => setEditing({ type: "calendar", item })} onDelete={() => remove("deleteCalendar", item.id, "删除这条日程？")} onCalendar={() => addToDeviceCalendar(item)}/>)}</div> : canInteract ? <Empty title="暂时没有待办" text="新增课程 DDL 或活动，宿舍日历就会显示在这里。" action="新增 DDL" onClick={() => setShowForm("ddl")} /> : <Empty title="暂时没有待办" text="宿舍成员新增的公开 DDL 与活动会显示在这里。" />}</section>
             <section className="panel today-panel"><div className="panel-head"><div><p className="eyebrow">TODAY&apos;S DUTY</p><h3>今日值日</h3></div><button className="soft-tag" onClick={() => { setTab("duties"); setSelectedDate(shanghaiDate()); }}>查看排班 <ChevronRight size={13}/></button></div><div className="today-duty"><div className="today-duty-assignee"><span>当日负责人</span><b>{dutyTodaySchedule?.username ?? "未安排"}</b></div><div className={`all-done ${dutyToday?.garbageDone && dutyToday?.sweepDone ? "complete" : ""}`}><span>{dutyToday?.garbageDone && dutyToday?.sweepDone ? "✓" : "·"}</span>{dutyToday?.garbageDone && dutyToday?.sweepDone ? "今日值日全部完成" : `${Number(!!dutyToday?.garbageDone) + Number(!!dutyToday?.sweepDone)} / 2 项已完成`}</div></div></section></div>
